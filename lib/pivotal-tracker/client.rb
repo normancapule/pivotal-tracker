@@ -46,6 +46,11 @@ module PivotalTracker
         "http://#{tracker_host}#{api_path}"
       end
 
+      def get_my_info
+        raise NoToken if @token.to_s.empty?
+        JSON new_v5_connection.get
+      end
+
       protected
 
         def protocol
@@ -62,6 +67,10 @@ module PivotalTracker
 
         def new_connection
           @connections[@token] = RestClient::Resource.new("#{use_ssl ? api_ssl_url : api_url}", :headers => {'X-TrackerToken' => @token, 'Content-Type' => 'application/xml'})
+        end
+
+        def new_v5_connection
+          RestClient::Resource.new("https://www.pivotaltracker.com/services/v5/me", :headers => {'X-TrackerToken' => @token, 'Content-Type' => 'application/xml'})
         end
 
         def protocol_changed?
