@@ -28,6 +28,12 @@ module PivotalTracker
 
         cached_connection? && !protocol_changed? ? cached_connection : new_connection
       end
+      
+      def v5_connection
+        raise NoToken if @token.to_s.empty?
+        @v5_connections ||= {}
+        v5_cached_connection ? v5_cached_connection : new_v5_connection
+      end
 
       def clear_connections
         @connections = nil
@@ -45,12 +51,7 @@ module PivotalTracker
       def api_url
         "http://#{tracker_host}#{api_path}"
       end
-
-      def get_my_info
-        raise NoToken if @token.to_s.empty?
-        JSON new_v5_connection.get
-      end
-
+      
       protected
 
         def protocol
@@ -64,13 +65,17 @@ module PivotalTracker
         def cached_connection
           @connections[@token]
         end
-
+        
         def new_connection
           @connections[@token] = RestClient::Resource.new("#{use_ssl ? api_ssl_url : api_url}", :headers => {'X-TrackerToken' => @token, 'Content-Type' => 'application/xml'})
         end
-
+        
+        def v5_cached_connection
+          @v5_connections[@token]
+        end
+        
         def new_v5_connection
-          RestClient::Resource.new("https://www.pivotaltracker.com/services/v5/me", :headers => {'X-TrackerToken' => @token, 'Content-Type' => 'application/xml'})
+          @v5_connections[@token] = RestClient::Resource.new("https://www.pivotaltracker.com/services/v5", :headers => {'X-TrackerToken' => @token, 'Content-Type' => 'application/xml'})
         end
 
         def protocol_changed?
